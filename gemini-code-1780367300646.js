@@ -1,0 +1,380 @@
+import { useState } from "react";
+
+const FORM_ACTION = "https://docs.google.com/forms/d/e/1FAIpQLSdN96V-I7TNrNiapC1DGyb8RdLU-IPQojCzZESUQlWL7ZmxcQ/formResponse";
+const ENTRY = {
+  age: "entry.340473432",
+  kotsuki: "entry.1225635598",
+  reason: "entry.385113940",
+  distReason: "entry.343771021",
+  kikabn: "entry.1601674347",
+  reiki: "entry.2093940330",
+};
+
+const CLOSINGS = [
+  "✦ 今、あなたのペースで大丈夫です。",
+  "☽ あなたはよく頑張っています。",
+  "✦ 今のあなたのままで、十分です。",
+  "* あなたの気持ちは、ちゃんと届いている可能性があると出ています。",
+  "☽ 焦らなくて大丈夫。あなたのペースで進めばいい。",
+  "✦ 今も、あなたは十分です。",
+  "* あなたが感じていることは、全部本物です。",
+  "☽ 大張夫。あなたは一人じゃありません。",
+  "✦ 今のあなたを、ちゃんと誰かが見ています。",
+  "* あなたの優しさは、必ず誰かに届いています。",
+  "☽ 焦らなくていい。あなたには時間があります。",
+  "✦ あなたが選んだ気持ちを、信じてください。",
+  "* その想いは、本物です。",
+  "☽ あなたらしく、それでいい。",
+];
+
+const KARE_CARDS = [
+  { id:1, name:"月影", read:"つきかげ", msg:"彼の気持ちは、今もあなたの側にある可能性があると出ています。見えないだけで、消えていない可能性があります。月が雲に隠れても消えないように、彼の中にあなたへの想いが今もそこにある可能性が映し出されています。安心してください。" },
+  { id:2, name:"微光", read:"びこう", msg:"彼の心に、あなたへの小さな光が灯り始めている可能性があると出ています。その光はまだ小さいけれど、確かにそこにある可能性があります。焦らなくて大丈夫。彼があなたを想う気持ちが、これから少しずつ大きくなっていく可能性が出ています。" },
+  { id:3, name:"星屑", read:"ほしくず", msg:"あなたの気持ちは本物です。だから星は、こう告げています。一度離れた縁も、また引き寄せられる時が来る可能性があると。今は散らばっているだけで、縁が消えていない可能性があります。二人の間にある見えない糸が、今もそこにある可能性が映し出されています。" },
+  { id:4, name:"白雨", read:"はくう", msg:"彼の中で、あなたへの感情が静かに動き始めている可能性があると出ています。突然の雨が大地を潤すように、彼の気持ちもいつか予想外のタイミングで溢れ出す可能性があります。その瞬間が来る可能性が、星に映し出されています。" },
+  { id:5, name:"朝露", read:"あさつゆ", msg:"あなたの純粋な気持ちは、彼にちゃんと届いていた可能性があります。彼が今もそれを大切に思っている可能性があると出ています。あなたが彼に与えた温もりが、同じように彼の心の中で今も生き続けている可能性が映し出されています。" },
+  { id:6, name:"薄明", read:"はくめい", msg:"彼の気持ちが、もうすぐ動き出す兆しを見せている可能性があると出ています。夜明け前が一番暗いように、今がその時かもしれません。あなたがここまで頑張ってきた時間は、無駄じゃない可能性があります。もうすぐ、光があなたのもとに届く可能性が出ています。" },
+  { id:7, name:"余白", read:"よはく", msg:"彼があなたのいない時間の中で、あなたのことを考えている可能性があると出ています。沈黙の中にこそ、本当の気持ちが宿る可能性があります。何も言わないのは、言葉にならないほど大切に思っているからかもしれません。その可能性が星に映し出されています。" },
+  { id:8, name:"凪", read:"なぎ", msg:"今は静かな時間。彼の中では、確かに何かが動き出している可能性があると出ています。凪の海の水面の下では大きな流れが生まれているように、この穏やかな時間が二人の次の章への大切な準備になっている可能性が映し出されています。" },
+  { id:9, name:"灯火", read:"ともしび", msg:"あなたが感じているその「まだ好き」という気持ち、大切にしてください。彼の中のあなたへの気持ちも、消えずに灯り続けている可能性があると出ています。どんなに時間が経っても、その炎が残っている可能性があります。あなたは一人じゃありません。" },
+  { id:10, name:"羽音", read:"はおと", msg:"彼が今、あなたのことを思い出している可能性があると出ています。羽音が聞こえるように、気配が確かに届いている可能性があります。遠く離れていても、心がつながっている可能性が星に映し出されています。あなたが感じているその感覚を、信じてください。" },
+  { id:11, name:"夜明", read:"よあけ", msg:"彼の気持ちに、新しい動きが生まれようとしている可能性があると出ています。夜明けはいつも突然訪れます。気がついたら空が明るくなっていたように、彼の気持ちも気がついたら動いている可能性があります。その瞬間がもうすぐ来る可能性が映し出されています。" },
+  { id:12, name:"泡沫", read:"うたかた", msg:"二人が過ごした時間は、本物でした。彼の中で、その記憶が今も大切に生きている可能性があると出ています。短くても本物だったものは消えない可能性があります。あなたが与えた愛が、ちゃんと彼の心に残っている可能性が星に映し出されています。" },
+  { id:13, name:"流星", read:"りゅうせい", msg:"彼の気持ちが動くタイミングが、確かに近づいている可能性があると出ています。流星は一瞬だけど、その光は目に焼き付く。あなたの存在も、彼の記憶の中でそんなふうに輝いている可能性があります。もうすぐ、その光が動き出す可能性が出ています。" },
+  { id:14, name:"静寂", read:"せいじゃく", msg:"彼が静かに、あなたのことを想っている可能性があると出ています。言葉にならない気持ちが、そこにある可能性があります。静寂は空虚ではなく、想いで満ちた空間かもしれません。あなたが大切にされている可能性が星に映し出されています。" },
+  { id:15, name:"在処", read:"ありか", msg:"彼の心の中に、あなたの居場所がまだある可能性があると出ています。どんなに時間が経っても、一度作られた居場所は消えない可能性があります。あなたが彼の心に刻んだものが、今もそこに在り続けている可能性が映し出されています。" },
+  { id:16, name:"境界", read:"きょうかい", msg:"彼も今、自分の気持ちと向き合っている可能性があると出ています。その先にあなたへの答えがある可能性があります。二人が同じ方向を向く時が、もうすぐ来る可能性が星に映し出されています。悩んでいるのは、それだけ真剣だから。" },
+  { id:17, name:"回避", read:"かいひ", msg:"彼が距離を置いているのは、彼自身がどうしていいのかわからなくなっている可能性があると出ています。経験が少ないから、気持ちの伝え方がわからないのかもしれません。それは彼自身が向き合うべきことで、あなたへの気持ちがちゃんとそこにある可能性が映し出されています。" },
+  { id:18, name:"防御", read:"ぼうぎょ", msg:"彼の壁は、あなたを拒絶しているのではない可能性があると出ています。彼の中にある価値観や経験が、前に進むことを難しくしているだけかもしれません。その壁の向こうに、あなたへの本物の想いがある可能性が星に映し出されています。" },
+  { id:19, name:"支配", read:"しはい", msg:"彼があなたへの気持ちをうまく表現できないのは、それだけ本物である可能性があると出ています。自分でも驚くほど深いところに、あなたへの想いがある可能性があります。それはあなたが与えてきた愛の証明かもしれません。そう星は告げています。" },
+];
+
+const ACTION_CARDS = [
+  { id:1, name:"月影", read:"つきかげ", msg:"今、好きなことを一つだけしてみてください。好きな音楽を聴く、好きなものを食べる、小さなことでいい。自分を喜ばせる時間が、あなたの内側を整える可能性があります。整ったあなたの姿が、自然と彼との可能性を引き寄せていく可能性が出ています。", action:"好きなことをする" },
+  { id:2, name:"微光", read:"びこう", msg:"ずっと気になっていたことを、一つだけ片付けてみてください。小さなことでいい。やるべきことを一つ終えた時、心が少し軽くなる可能性があります。その軽さが、あなたの表情を変え、彼との可能性を広げていく可能性が出ています。", action:"やるべきことを一つ片付ける" },
+  { id:3, name:"星屑", read:"ほしくず", msg:"今、自分のために何か小さなことをしてみてください。新しいカフェに行く、気になっていた本を読む、なんでもいい。あなたが自分の人生を楽しんでいる姿が、彼との縁を引き寄せていく可能性があると出ています。", action:"自分のために動く" },
+  { id:4, name:"白雨", read:"はくう", msg:"今、好きなことに少しだけ時間を使ってみてください。趣味でも、食べることでも、散歩でも。自分を満たすことが、あなたの魅力を育てる可能性があります。満たされたあなたを見た時、彼が「また会いたい」と思う可能性が出ています。", action:"好きなことに時間を使う" },
+  { id:5, name:"朝露", read:"あさつゆ", msg:"今、深呼吸を一回だけしてみてください。それだけで十分です。心が穏やかな時、人は本来の魅力を発揮できる可能性があります。あなたの心が整うにつれて、彼との縁も自然と整っていく可能性が出ています。", action:"深呼吸する" },
+  { id:6, name:"薄明", read:"はくめい", msg:"ずっと後回しにしていたことを、今一つだけやってみてください。やり終えた時の清々しさが、あなたを前に向かせる可能性があります。前を向いたあなたの姿が、流れを変えていく可能性があると出ています。", action:"後回しにしていたことを一つ" },
+  { id:7, name:"余白", read:"よはく", msg:"今、自分だけの時間を少しだけ作ってみてください。何もしない時間でもいい。自分を大切にする人は、他人からも大切にされる可能性があります。あなたの余白が、あなたの魅力を育て、彼との可能性を広げていく可能性が出ています。", action:"自分だけの時間を作る" },
+  { id:8, name:"凪", read:"なぎ", msg:"今、好きなものを食べてください。それだけでいい。自分を喜ばせる小さな積み重ねが、あなたの内側を豊かにする可能性があります。豊かになったあなたが、自然と彼を引き寄せる存在になっていく可能性が出ています。", action:"好きなものを食べる" },
+  { id:9, name:"灯火", read:"ともしび", msg:"今、自分に優しい言葉をかけてあげてください。「よく頑張っているね」と。自分を大切にできる人は、他人からも大切にされる可能性があります。あなたが自分を愛する姿が、彼の心を動かしていく可能性があると出ています。", action:"自分を大切にする" },
+  { id:10, name:"羽音", read:"はおと", msg:"今、気になっていたことを一つだけやってみてください。行ってみたかった場所、試してみたかったこと、なんでもいい。小さな行動が大きな流れを作る可能性があります。動いたあなたの周りで、縁も一緒に動き出す可能性が出ています。", action:"気になっていたことをやる" },
+  { id:11, name:"夜明", read:"よあけ", msg:"今できる一番小さな自分磨きを一つだけしてみてください。スキンケアでも、ストレッチでも、なんでもいい。少しだけ良くなれば、それで十分です。磨かれたあなたが、彼との新しい物語の主人公になれる可能性が出ています。", action:"小さな自分磨きをする" },
+  { id:12, name:"泡沫", read:"うたかた", msg:"今、好きな音楽を聴いてみてください。それだけでいい。好きなものに触れる時間が、あなたの心を柔らかくする可能性があります。柔らかくなったあなたの表情が、自然と彼の目を引いていく可能性が出ています。", action:"好きな音楽を聴く" },
+  { id:13, name:"流星", read:"りゅうせい", msg:"今、外に出てみてください。少しだけでいい。外の空気を吸うだけで、気持ちが変わる可能性があります。前を向いたあなたの姿が、彼の心に「もう一度」という気持ちを芽生えさせる可能性があると出ています。", action:"外に出てみる" },
+  { id:14, name:"静寂", read:"せいじゃく", msg:"今、5分だけ静かに座って、自分の気持ちに耳を傾けてみてください。本当に望んでいることは何か。自分の声を聞けた時、道が開ける可能性があります。整ったあなたの心が、彼との可能性を引き寄せていく可能性が出ています。", action:"自分の声を聞く" },
+  { id:15, name:"在処", read:"ありか", msg:"今、自分が「これが好き」と思えることを一つしてみてください。あなたがあなたらしくいる時、最も輝ける可能性があります。そのあなたの姿が、彼の「もう一度」という気持ちを育てていく可能性が出ています。", action:"好きなことをする" },
+  { id:16, name:"境界", read:"きょうかい", msg:"今、紙に自分の気持ちを書き出してみてください。頭の中だけで考えていると整理がつかないことも、書くと見えてくる可能性があります。気持ちが整理された時、次の一歩が自然とわかってくる可能性が出ています。", action:"気持ちを書き出す" },
+  { id:17, name:"回避", read:"かいひ", msg:"今、やりたかったことを一つだけやってみてください。彼のことを少し横に置いて、自分の時間を楽しんでいい。あなたの世界が広がるほど、あなた自身の魅力も広がる可能性があります。充実したあなたが、彼の目を引いていく可能性が出ています。", action:"やりたいことをやる" },
+  { id:18, name:"防御", read:"ぼうぎょ", msg:"今は無理しなくていい。やるべきことが一つあるなら、それだけやれば十分です。自分のペースで前に進んでいれば大丈夫。あなたが自分を大切にする姿が、彼の「守りたい」という気持ちを育てていく可能性が出ています。", action:"自分のペースで一つだけ" },
+  { id:19, name:"支配", read:"しはい", msg:"今、好きなことに集中してみてください。彼への気持ちを少し横に置いて、自分の人生を楽しんでいい。自由に輝くあなたを見た時、彼の中に「もう一度」という気持ちが生まれる可能性があると出ています。", action:"好きなことに集中する" },
+];
+
+const WAKARE_REASONS = ["気持ちのすれ違い","自然消滅","価値観の違い","相手の気持ちが冷めた","自分の気持ちが冷めた","遠距離","浮気・裏切り","その他"];
+const DISTANCE_REASON = ["相手から距離を置かれた","自分から距離を置いた","お互いに自然と離れた"];
+const RENRAKU = ["毎日ある","たまにある","ほとんどない","全くない"];
+const KIKABN = ["1ヶ月以内","1〜3ヶ月","3〜6ヶ月","半年〜1年","1年以上"];
+const KOTSUKI = ["3ヶ月未満","3〜6ヶ月","6ヶ月〜1年","1〜2年","2年以上","付き合っていない（片思い）"];
+const AGES = ["10代","20代前半","20代後半","30代前半","30代後半","40代前半","40代後半","50代以上"];
+
+const T = {
+  bg:"#050d1a", navy1:"#0a1628", navy2:"#0f2040", navy3:"#1a3060",
+  accent:"#8ab4d4", silver:"#c8d8e8", silverB:"#e8f0f8", gold:"#c8a84b",
+  text:"#d0e4f4", muted:"#6a8aaa", border:"rgba(140,180,220,0.2)", borderB:"rgba(200,216,232,0.4)",
+};
+
+// CSS内のプロパティ末尾にセミコロンを追加
+const css = `
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700&family=Cinzel:wght@400;700&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  ::-webkit-scrollbar{width:3px;}
+  ::-webkit-scrollbar-thumb{background:${T.navy3};border-radius:2px;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes starFloat{0%,100%{opacity:0.3;transform:translateY(0)}50%{opacity:0.9;transform:translateY(-5px)}}
+  @keyframes cardFlip{0%{transform:rotateY(180deg) scale(0.85);opacity:0}100%{transform:rotateY(0) scale(1);opacity:1}}
+  @keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+  .fade{animation:fadeIn 0.7s ease forwards}
+  .shimmer{
+    background:linear-gradient(90deg,${T.silver} 0%,${T.silverB} 40%,${T.gold} 60%,${T.silver} 100%);
+    background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;animation:shimmer 3s linear infinite;
+  }
+  select{appearance:none;-webkit-appearance:none;}
+`;
+
+const TERMS = [
+  ["第1条（サービスの性質）","本サービスはカードを用いたエンターテインメントサービスです。占い結果の正確性・復縁等の効果を保証しません。カウンセリング・医療の代替ではありません。18歳未満の方はご利用いただけません。"],
+  ["第2条（データの利用）","入力いただいた情報（年代・交際期間・別れた理由等）は、恋愛・復縁に関する統計データ研究のため匿名化して活用します。個人を特定する情報は収集しません。第三者への販売・提供は一切しません。法令に基づく開示要求がある場合、または犯罪行為が疑われる場合は、弁護士・裁判所・警察等の機関へ情報を提供することがあります。"],
+  ["第3条（緊急時）","希死念慮・自傷行為等の緊急時は本サービスでは対応できません。\nいのちの電話：0120-783-556\nよりそいホットライン：0120-279-338\n警察：110 / 救急：119"],
+  ["第4条（禁止事項）","公序良俗に反する利用、犯罪行為への利用、他者への誹謗中傷、不正アクセス等を禁止します。"],
+  ["第5条（反社会的勢力）","暴力団等反社会的勢力に該当する方のご利用をお断りします。"],
+  ["第6条（免責）","本サービスの利用によって生じた損害について運営者責任を負いません。"],
+  ["第7条（準拠法・管轄）","本規約は日本法に準拠します。紛争については運営者所在地を管轄する裁判所を第一審とします。"],
+];
+
+function Stars() {
+  const s = Array.from({length:35},(_,i)=>({l:Math.random()*100,t:Math.random()*100,sz:Math.random()*2+0.5,d:Math.random()*4,dur:2+Math.random()*3}));
+  return <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
+    {s.map((x,i)=><div key={i} style={{position:"absolute",left:`${x.l}%`,top:`${x.t}%`,width:x.sz,height:x.sz,borderRadius:"50%",background:i%3===0?T.gold:T.silver,animation:`starFloat ${x.dur}s ${x.d}s ease-in-out infinite`,opacity:0.4}}/>)}
+  </div>;
+}
+
+function Btn({onClick,children,disabled,small}) {
+  return <button onClick={onClick} disabled={disabled} style={{
+    width:"100%",padding:small?"12px":"15px",borderRadius:50,
+    border:`1px solid ${disabled?"rgba(255,255,255,0.08)":T.borderB}`,
+    background:disabled?"rgba(255,255,255,0.03)":`linear-gradient(135deg,${T.navy3},#1e4080)`,
+    color:disabled?T.muted:T.silverB,fontSize:small?12:14,fontWeight:700,
+    cursor:disabled?"not-allowed":"pointer",letterSpacing:2,fontFamily:"inherit",
+    boxShadow:disabled?"none":`0 0 20px rgba(140,180,220,0.12)`,
+    transition:"all 0.3s",marginBottom:small?8:0,
+  }}>{children}</button>;
+}
+
+function Select({label,value,onChange,options}) {
+  return <div style={{marginBottom:14}}>
+    <div style={{fontSize:11,color:T.accent,letterSpacing:1,marginBottom:6}}>{label}</div>
+    <select value={value} onChange={e=>onChange(e.target.value)} style={{
+      width:"100%",padding:"10px 14px",borderRadius:10,border:`1px solid ${T.border}`,
+      background:T.navy1,color:value?T.text:T.muted,fontSize:13,fontFamily:"inherit",cursor:"pointer",
+    }}>
+      <option value="" style={{color:T.muted}}>選んでください</option>
+      {options.map(o=><option key={o} value={o} style={{color:T.text,background:T.navy1}}>{o}</option>)}
+    </select>
+  </div>;
+}
+
+function CardFace({card,revealed,onClick,label}) {
+  return <div style={{textAlign:"center"}}>
+    {label&&<div style={{fontSize:10,color:T.muted,letterSpacing:2,marginBottom:8}}>{label}</div>}
+    <div onClick={()=>!revealed&&onClick&&onClick()} style={{
+      width:148,height:225,borderRadius:18,margin:"0 auto",
+      background:revealed?`linear-gradient(160deg,${T.navy2},${T.navy3})`:`linear-gradient(160deg,${T.navy3},#1e3a6e)`,
+      border:`1.5px solid ${revealed?T.borderB:T.border}`,
+      display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+      boxShadow:revealed?`0 0 32px rgba(140,180,220,0.22),inset 0 0 20px rgba(140,180,220,0.04)`:`0 4px 24px rgba(0,0,10,0.5)`,
+      cursor:revealed?"default":"pointer",position:"relative",overflow:"hidden",
+      animation:revealed?"cardFlip 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards":"none",
+    }}>
+      {!revealed&&<>
+        <div style={{fontSize:34,marginBottom:8,opacity:0.5}}>🌙</div>
+        <div style={{fontSize:10,color:T.muted,letterSpacing:3,fontFamily:"'Cinzel',serif"}}>TAP</div>
+      </>}
+      {revealed&&<>
+        <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse at 50% 30%,rgba(140,180,220,0.1),transparent 70%)`}}/>
+        <div style={{fontSize:10,color:T.muted,letterSpacing:3,fontFamily:"'Cinzel',serif",marginBottom:10}}>✦</div>
+        <div style={{fontSize:22,color:T.silverB,fontFamily:"'Noto Serif JP',serif",fontWeight:700,letterSpacing:4,marginBottom:4}}>{card.name}</div>
+        <div style={{fontSize:10,color:T.accent,letterSpacing:2,marginBottom:10}}>{card.read}</div>
+        <div style={{width:36,height:1,background:T.border,marginBottom:10}}/>
+        <div style={{fontSize:10,color:T.gold,letterSpacing:0.5,textAlign:"center",padding:"0 14px",lineHeight:1.7}}>{card.action||"✦"}</div>
+      </>}
+    </div>
+  </div>;
+}
+
+export default function App() {
+  const [screen,setScreen]=useState("home");
+  const [agreed,setAgreed]=useState(false);
+  const [isAdult,setIsAdult]=useState(false);
+  const [showTerms,setShowTerms]=useState(false);
+  const [scrolled,setScrolled]=useState(false);
+  const [age,setAge]=useState("");
+  const [kotsuki,setKotsuki]=useState("");
+  const [reason,setReason]=useState("");
+  const [distReason,setDistReason]=useState("");
+  const [kikabn,setKikabn]=useState("");
+  const [reiki,setReiki]=useState("");
+  const [kareCard,setKareCard]=useState(null);
+  const [actionCard,setActionCard]=useState(null);
+  const [closing,setClosing]=useState("");
+  const [rev1,setRev1]=useState(false);
+  const [rev2,setRev2]=useState(false);
+  const [submitted,setSubmitted]=useState(false);
+
+  const canStart = agreed && isAdult;
+  const dataOk = age && kotsuki && reason && distReason && kikabn && reiki;
+
+  const drawCards = () => {
+    const k = KARE_CARDS[Math.floor(Math.random()*KARE_CARDS.length)];
+    let a;
+    do { a = ACTION_CARDS[Math.floor(Math.random()*ACTION_CARDS.length)]; } while(a.id===k.id);
+    const c = CLOSINGS[Math.floor(Math.random()*CLOSINGS.length)];
+    setKareCard(k); setActionCard(a); setClosing(c);
+    setRev1(false); setRev2(false); setSubmitted(false);
+    setScreen("cards");
+  };
+
+  // Googleフォーム送信処理をFormDataを使ったPOSTボディ送信に修正
+  const submitToForm = () => {
+    const formData = new FormData();
+    formData.append(ENTRY.age, age);
+    formData.append(ENTRY.kotsuki, kotsuki);
+    formData.append(ENTRY.reason, reason);
+    formData.append(ENTRY.distReason, distReason);
+    formData.append(ENTRY.kikabn, kikabn);
+    formData.append(ENTRY.reiki, reiki);
+
+    fetch(FORM_ACTION, { 
+      method: "POST", 
+      body: formData,
+      mode: "no-cors" 
+    })
+      .then(()=>setSubmitted(true))
+      .catch(()=>setSubmitted(true));
+  };
+
+  const W = {minHeight:"100vh",background:T.bg,fontFamily:"'Noto Serif JP',serif",color:T.text,position:"relative",overflow:"hidden"};
+  const Inner = ({children})=><div style={{maxWidth:420,margin:"0 auto",padding:"0 20px 60px",position:"relative",zIndex:1}}>{children}</div>;
+
+  if(screen==="home") return <div style={W}>
+    <style>{css}</style><Stars/>
+    <Inner>
+      <div className="fade" style={{textAlign:"center",padding:"56px 0 32px"}}>
+        <div style={{fontSize:50,marginBottom:14,filter:`drop-shadow(0 0 20px rgba(200,168,75,0.45))`}}>🔮</div>
+        <h1 style={{fontSize:24,fontWeight:300,letterSpacing:6,lineHeight:1.6,marginBottom:10}}>
+          <span className="shimmer">また、彼に</span><br/><span className="shimmer">会えますか？</span>
+        </h1>
+        <p style={{fontSize:11,color:T.muted,letterSpacing:3}}>✦ 星が彼の気持ちを読み解く ✦</p>
+      </div>
+      <div style={{background:T.navy1,border:`1px solid ${T.border}`,borderRadius:20,padding:20,marginBottom:20}}>
+        <div style={{fontSize:11,color:T.accent,textAlign:"center",marginBottom:14,letterSpacing:1}}>🛡️ 安心のお約束</div>
+        <div style={{fontSize:12,color:T.muted,lineHeight:2,textAlign:"center",marginBottom:16}}>
+          個人情報の入力不要<br/>データは匿名で統計研究に活用します<br/>第三者への販売・提供は一切しません
+        </div>
+        <div style={{height:1,background:T.border,marginBottom:16}}/>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer"}} onClick={e=>{e.preventDefault();setShowTerms(true);}}>
+            <input type="checkbox" checked={agreed} onChange={()=>{}} style={{accentColor:T.accent,width:16,height:16,marginTop:2,flexShrink:0}}/>
+            <span style={{fontSize:13,color:T.text,lineHeight:1.7}}>
+              <span style={{color:T.accent,textDecoration:"underline"}}>利用規約・免責事項</span>を読み、同意します。
+              {!agreed&&<span style={{display:"block",fontSize:10,color:T.muted,marginTop:2}}>※タップすると規約が開きます</span>}
+            </span>
+          </label>
+          <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}>
+            <input type="checkbox" checked={isAdult} onChange={e=>setIsAdult(e.target.checked)} style={{accentColor:T.accent,width:16,height:16,flexShrink:0}}/>
+            <span style={{fontSize:13,color:T.text}}>私は<strong>18歳以上</strong>です。</span>
+          </label>
+        </div>
+      </div>
+      <Btn onClick={()=>canStart&&setScreen("data")} disabled={!canStart}>✦ 無料でカードを引く ✦</Btn>
+    </Inner>
+
+    {showTerms&&<div style={{position:"fixed",inset:0,background:"rgba(0,5,15,0.88)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:300,backdropFilter:"blur(8px)"}} onClick={()=>setShowTerms(false)}>
+      <div style={{background:T.navy1,border:`1px solid ${T.borderB}`,borderRadius:20,maxWidth:400,width:"100%",maxHeight:"82vh",display:"flex",flexDirection:"column",overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+        <div style={{padding:"18px 20px 12px",borderBottom:`1px solid ${T.border}`}}>
+          <div style={{fontSize:13,color:T.silverB,fontFamily:"'Cinzel',serif",letterSpacing:2}}>TERMS & CONDITIONS</div>
+          <div style={{fontSize:11,color:T.muted,marginTop:4}}>最後までスクロールすると同意できます</div>
+        </div>
+        {/* スクロール判定のロジックをより厳密に改善（下部5px以内で判定） */}
+        <div onScroll={e=>{const el=e.target;if(el.scrollHeight - el.scrollTop <= el.clientHeight + 5)setScrolled(true);}} style={{flex:1,overflowY:"auto",padding:"16px 20px"}}>
+          <div style={{background:`rgba(140,180,220,0.06)`,borderRadius:12,padding:"12px 14px",marginBottom:18,border:`1px solid ${T.border}`}}>
+            <div style={{fontSize:11,color:T.accent,fontWeight:700,marginBottom:8,letterSpacing:1}}>📋 かんたん要約</div>
+            <div style={{fontSize:12,color:T.text,lineHeight:1.9,opacity:0.85}}>
+              ① 占い結果・復縁等の実現性は保証しません<br/>
+              ② データは匿名で統計研究に使用します<br/>
+              ③ 第三者への販売は一切しません<br/>
+              ④ 緊急時は専門機関へご相談ください<br/>
+              ⑤ カウンセリング・医療の代替ではありません
+            </div>
+          </div>
+          {TERMS.map(([t,c],i)=><div key={i} style={{marginBottom:18}}>
+            <div style={{fontSize:11,color:T.accent,fontWeight:700,marginBottom:6,letterSpacing:1}}>{t}</div>
+            <p style={{fontSize:12,color:T.text,lineHeight:1.9,opacity:0.85,whiteSpace:"pre-wrap"}}>{c}</p>
+            {i<TERMS.length-1&&<div style={{borderTop:`1px dashed ${T.border}`,marginTop:16}}/>}
+          </div>)}
+          <div style={{fontSize:10,color:T.muted,textAlign:"center",paddingBottom:8}}>制定日：2026年5月</div>
+        </div>
+        <div style={{padding:"14px 20px",borderTop:`1px solid ${T.border}`}}>
+          {!scrolled&&<div style={{fontSize:11,color:T.muted,textAlign:"center",marginBottom:10}}>↓ 下までスクロールしてください</div>}
+          <div style={{display:"flex",gap:10}}>
+            <button onClick={()=>setShowTerms(false)} style={{flex:1,padding:10,borderRadius:50,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>閉じる</button>
+            <button onClick={()=>{if(scrolled){setAgreed(true);setShowTerms(false);}}} disabled={!scrolled} style={{flex:2,padding:10,borderRadius:50,border:"none",background:scrolled?`linear-gradient(135deg,${T.navy3},${T.accent})`:"rgba(255,255,255,0.05)",color:scrolled?T.bg:T.muted,fontSize:12,fontWeight:700,cursor:scrolled?"pointer":"not-allowed",fontFamily:"inherit"}}>
+              {scrolled?"同意してはじめる ✦":"読み終えると同意できます"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>}
+  </div>;
+
+  if(screen==="data") return <div style={W}>
+    <style>{css}</style><Stars/>
+    <Inner>
+      <div className="fade" style={{textAlign:"center",padding:"48px 0 28px"}}>
+        <div style={{fontSize:11,color:T.muted,letterSpacing:3,marginBottom:10}}>STEP 1</div>
+        <h2 style={{fontSize:18,fontWeight:300,letterSpacing:4,color:T.silverB,lineHeight:1.6}}>あなたのことを<br/>星に伝えさせてください</h2>
+      </div>
+      <div className="fade" style={{background:T.navy1,border:`1px solid ${T.border}`,borderRadius:20,padding:20,marginBottom:20}}>
+        <Select label="あなたの年代" value={age} onChange={setAge} options={AGES}/>
+        <Select label="交際期間（または想いを寄せていた期間）" value={kotsuki} onChange={setKotsuki} options={KOTSUKI}/>
+        <Select label="別れた理由・距離が生まれた理由" value={reason} onChange={setReason} options={WAKARE_REASONS}/>
+        <Select label="距離が生まれたのは？" value={distReason} onChange={setDistReason} options={DISTANCE_REASON}/>
+        <Select label="別れてからの期間" value={kikabn} onChange={setKikabn} options={KIKABN}/>
+        <Select label="今も彼との連絡はありますか？" value={reiki} onChange={setReiki} options={RENRAKU}/>
+      </div>
+      <Btn onClick={()=>dataOk&&drawCards()} disabled={!dataOk}>✦ カードを引く ✦</Btn>
+    </Inner>
+  </div>;
+
+  if(screen==="cards") return <div style={W}>
+    <style>{css}</style><Stars/>
+    <Inner>
+      <div className="fade" style={{textAlign:"center",padding:"48px 0 24px"}}>
+        <div style={{fontSize:11,color:T.muted,letterSpacing:3,marginBottom:10}}>READING</div>
+        <h2 style={{fontSize:18,fontWeight:300,letterSpacing:4,color:T.silverB}}>カードをタップして引いてください</h2>
+      </div>
+
+      <div style={{display:"flex",gap:16,justifyContent:"center",marginBottom:24}}>
+        <CardFace card={kareCard} revealed={rev1} onClick={()=>setRev1(true)} label="彼の本音"/>
+        <CardFace card={actionCard} revealed={rev2} onClick={()=>rev1&&setRev2(true)} label="あなたへのメッセージ"/>
+      </div>
+
+      {!rev1&&<div className="fade" style={{textAlign:"center",fontSize:12,color:T.muted,letterSpacing:1,marginBottom:20}}>左のカードから引いてください</div>}
+      {rev1&&!rev2&&<div className="fade" style={{textAlign:"center",fontSize:12,color:T.muted,letterSpacing:1,marginBottom:20}}>次のカードを引いてください</div>}
+
+      {rev1&&<div className="fade" style={{marginBottom:16}}>
+        <div style={{background:T.navy1,border:`1px solid ${T.borderB}`,borderRadius:16,padding:20}}>
+          <div style={{fontSize:10,color:T.accent,letterSpacing:2,marginBottom:10}}>✦ 彼の本音　{kareCard.name}（{kareCard.read}）</div>
+          <p style={{fontSize:13,color:T.text,lineHeight:2.2,fontWeight:300}}>{kareCard.msg}</p>
+        </div>
+      </div>}
+
+      {rev2&&<div className="fade">
+        <div style={{background:T.navy1,border:`1px solid ${T.gold}`,borderRadius:16,padding:20,marginBottom:16,boxShadow:`0 0 24px rgba(200,168,75,0.08)`}}>
+          <div style={{fontSize:10,color:T.gold,letterSpacing:2,marginBottom:10}}>✦ あなたへのメッセージ　{actionCard.name}（{actionCard.read}）</div>
+          <p style={{fontSize:13,color:T.text,lineHeight:2.2,fontWeight:300}}>{actionCard.msg}</p>
+        </div>
+
+        <div style={{background:`linear-gradient(135deg,rgba(26,48,96,0.9),rgba(15,32,64,0.9))`,border:`1px solid ${T.borderB}`,borderRadius:16,padding:20,marginBottom:16}}>
+          <div style={{fontSize:11,color:T.muted,letterSpacing:2,marginBottom:8}}>今のあなたに必要なこと</div>
+          <div style={{fontSize:20,color:T.gold,fontWeight:700,textAlign:"center",letterSpacing:2,marginBottom:12}}>{actionCard.action}</div>
+          <p style={{fontSize:14,color:T.silverB,textAlign:"center",lineHeight:1.9,fontWeight:300}}>{closing}</p>
+        </div>
+
+        <div style={{background:T.navy1,border:`1px solid ${T.border}`,borderRadius:16,padding:20,marginBottom:12}}>
+          <div style={{fontSize:11,color:T.gold,letterSpacing:1,marginBottom:10}}>✦ あなたの物語を次の誰かの星明かりに</div>
+          <p style={{fontSize:12,color:T.muted,lineHeight:1.9,marginBottom:16}}>あなたのその後が、同じ夜を歩く誰かの道しるべになります。</p>
+          {!submitted ? (
+            <button onClick={submitToForm} style={{
+              width:"100%",padding:"12px",borderRadius:50,
+              border:`1px solid ${T.gold}`,background:"transparent",
+              color:T.gold,fontSize:12,fontWeight:700,
+              cursor:"pointer",letterSpacing:1,fontFamily:"inherit",
+            }}>
+              ✦ あなたの経験を星明かりとして贈る ✦
+            </button>
+          ) : (
+            <div style={{textAlign:"center",fontSize:13,color:T.accent,letterSpacing:1,padding:"10px 0"}}>
+              ✦ ありがとうございます。あなたの物語は届きました ✦
+            </div>
+          )}
+        </div>
+
+        <Btn onClick={()=>setScreen("home")} small>はじめに戻る</Btn>
+      </div>}
+    </Inner>
+  </div>;
+
+  return null;
+}
