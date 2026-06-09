@@ -327,13 +327,17 @@ function drawCards(){
   document.getElementById('hint').textContent='左のカードから引いてください';
   document.getElementById('hint').style.display='block';
   showScreen('cards');
-  google.script.run.saveData(
-    document.getElementById('sel-age').value,
-    document.getElementById('sel-kotsuki').value,
-    document.getElementById('sel-reason').value,
-    document.getElementById('sel-dist').value,
-    document.getElementById('sel-kikabn').value,
-    document.getElementById('sel-reiki').value
+  fetch("https://script.google.com/macros/s/AKfycby5YCmfyYmlLn1wvuW2qPPc8S86xBKhlCMtwshvgh6F0_-wrMISNtlpVTvI6vC9TSa-xg/exec", {
+  method: "POST",
+  body: new URLSearchParams({
+    age: document.getElementById('sel-age').value,
+    kotsuki: document.getElementById('sel-kotsuki').value,
+    reason: document.getElementById('sel-reason').value,
+    distReason: document.getElementById('sel-dist').value,
+    kikabn: document.getElementById('sel-kikabn').value,
+    reiki: document.getElementById('sel-reiki').value
+  })
+}).catch(err => console.log(err));
   );
 }
 
